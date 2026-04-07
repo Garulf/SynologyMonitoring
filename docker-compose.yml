@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  router-monitor:
+    build:
+      context: .
+      dockerfile: src/monitor_router/Dockerfile
+    container_name: synology-router-monitor
+    restart: unless-stopped
+    environment:
+      - INFLUX_URL=http://YOUR_INFLUXDB_IP:8086
+      - INFLUX_TOKEN=YOUR_INFLUXDB_TOKEN
+      - INFLUX_ORG=YOUR_ORGANIZATION_NAME
+      - INFLUX_BUCKET=telegraf
+      - SSH_HOST=YOUR_ROUTER_IP
+      - SSH_USER=admin
+      - SSH_KEY_PATH=/app/id_rsa
+      - PYTHONPATH=/app/src
+    volumes:
+      - ./id_rsa:/app/id_rsa:ro
+      - ./GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb:ro
+
+  internet-monitor:
+    build:
+      context: .
+      dockerfile: src/monitor_router/Dockerfile
+    container_name: synology-internet-monitor
+    restart: unless-stopped
+    # Overriding the default CMD to run the internet speed test script
+    command: python Monitor-Internet.py
+    environment:
+      - INFLUX_URL=http://YOUR_INFLUXDB_IP:8086
+      - INFLUX_TOKEN=YOUR_INFLUXDB_TOKEN
+      - INFLUX_ORG=YOUR_ORGANIZATION_NAME
+      - INFLUX_BUCKET=speedtests
+      - GENERAL_DELAY=10
+      - GENERAL_OUTPUT=True
+    volumes:
+      - ./GeoLite2-City.mmdb:/app/GeoLite2-City.mmdb:ro
+    # Note: Monitor-Internet.py currently runs once. 
+    # Consider uncommenting the loop in Monitor-Internet.py for continuous monitoring.

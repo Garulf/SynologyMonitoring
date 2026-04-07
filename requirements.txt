@@ -1,0 +1,7 @@
+influxdb-client
+speedtest-cli
+paramiko
+geoip2
+python-geohash
+pytest
+pytest-mock

@@ -14,26 +14,38 @@ InfluxDB - docker pull influxdb
 Grafana -  docker pull grafana/grafana
 Python3 + Scripts - docker pull centos
 
-For the Python part I recommend pulling the CentOS docker base image and installing python3 on it. After that clone this repository and store and configure those scripts to run using crontab on your container.
+## Setup
+1. **InfluxDB 2.0+**: Ensure you have an InfluxDB instance running with a Bucket and Token created.
+2. **Python Environment**: Install dependencies using the provided requirements file:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. **GeoIP**: The scripts require the `GeoLite2-City.mmdb` database. You can download it manually or use the provided utility script (requires a MaxMind License Key):
+   ```bash
+   # Option 1: Using environment variable
+   export MAXMIND_LICENSE_KEY=your_license_key
+   python src/update_geoip.py
 
-Monitor-Internet.py    - Update the included config_internet.ini file to reflect your InfluxDB IP/Username/Database Name
+   # Option 2: Passing as an argument
+   python src/update_geoip.py your_license_key
+   ```
 
-Monitor-Pihole.py      -  Update the included config_pihole.ini file to reflect your Pihole IP/Username/API Location
+## Monitoring Scripts
 
-Monitor-NAS.py         -   Update lines 14-20 to reflect your NAS IP/Username/Password - IMPORTANT: This user must be a NAS admin, otherwise the API calls performed by the python script will fail. Not my fault! I'm just emulating the act of browsing your nas interface and extracting this information. Half of the APIS used by me are not documented by Synology and they were extracted by a process of observation and experimentation. 
+### Internet Speed (Monitor-Internet.py)
+Uses `speedtest-cli` to track bandwidth. Update `config_internet.ini` with your InfluxDB details.
 
-Monitor-ROUTER.py       - Update lines 20-25 to reflect your NAS IP/Username/Password - IMPORTANT: This user must be a ROUTER admin(Follow this guide to create a second admin user on your Synology router), otherwise the API calls performed by the python script will fail. Not my fault! I'm just emulating the act of browsing your nas interface and extracting this information. Half of the APIS used by me are not documented by Synology and they were extracted by a process of observation and experimentation. 
-Both Monitor-NAS and Monitor-Router use the default telegram database called telegraf to store data. The following series are available:
+### Router Status (Monitor-Router.py)
+This script now executes commands directly on your Synology Router via SSH using `synowebapi`.
+- **Requirement**: SSH must be enabled on the router.
+- **Auth**: Uses an SSH Key for passwordless execution.
+- **Config**: Update `config_router.ini` with your SSH host and InfluxDB token.
 
-
-NAS - Everything is collected every 30+- secs.
-
-NARS.Remote.System.Processess
-NARS.Remote.System.Logs.Connection
-NARS.Remote.System.Logs.FileAccess
-NARS.Remote.ConnecteClients
-
-ROUTER - Default collection time is every 30+- secs, with a few exceptions. Check below:
+## Running Tests
+This project uses `pytest` for validation. Run:
+```bash
+pytest test_monitoring.py
+```
 
 OUTLAND.Remote.Network.VPNPlus
 OUTLAND.Remote.System.CPU
@@ -50,10 +62,3 @@ OUTLAND.Remote.Network.FW.Summary.Domain.day          - Collected every day(at 5
 OUTLAND.Remote.Network.FW.Summary.Url.Live
 OUTLAND.Remote.Network.FW.WebTraffic.Live
 OUTLAND.Remote.System.Logs.Connection
-
-
-
-
-
-
-
